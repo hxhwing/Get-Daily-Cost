@@ -24,14 +24,17 @@ gcloud pubsub topics create $topic_name
 ### 2. 创建用于查询数据的 Cloud Function，注意需要设置对应的环境变量，包括：
  - project_id: BigQuery cost table 所在的 project
  - topic_path: 用于接收成本数据，并推送邮件的 Pub/Sub topic，格式为 ```projects/project_id/topics/topic_name```
- - cost_table_name: BigQuery 中存放 detailed usage cost 的表名 
+ - cost_table_name: BigQuery 中存放 detailed usage cost 的表名，格式为 ```project_id.dataset_name.table_name```
 ```
 REGION="us-central1"
 project_id=$(gcloud config get-value project)
 
 topic_path=$(gcloud pubsub topics describe $topic_name --format="value(name)")
 
-cost_table_name=$(gcloud alpha bq tables list --dataset=cost --filter="TABLE_ID ~ ^gcp_billing_export" --format="value(TABLE_ID)")
+
+dataset="cost"  # 按照实际情况替换cost dataset name
+table=$(gcloud alpha bq tables list --dataset=$dataset --filter="TABLE_ID ~ ^gcp_billing_export" --format="value(TABLE_ID)")
+cost_table_name=$project_id"."$dataset"."$table
 
 
 gcloud functions deploy get-daily-cost \
@@ -40,13 +43,13 @@ gcloud functions deploy get-daily-cost \
 --region=$REGION \
 --source=. \
 --entry-point=get_daily_cost \
---set-env-vars project_id=$project_id,topic_path=$topic_path, cost_table_name=$cost_table_name \
+--set-env-vars project_id=$project_id,topic_path=$topic_path,cost_table_name=$cost_table_name \
 --trigger-http 
 ```
 
 如果不需要通过 Application Integration 发送邮件，而是直接获取查询的结果数据，也可以直接调用改 Cloud Function 的 HTTP endpoint
 ```
-curl -m 70 -X GET https://us-central1-hxh-demo.cloudfunctions.net/daily_cost \
+curl -m 70 -X GET https://us-central1-hxh-demo.cloudfunctions.net/get-daily-cost \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json"
 ```
