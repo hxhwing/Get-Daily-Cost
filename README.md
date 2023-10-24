@@ -44,6 +44,70 @@ gcloud functions deploy get-daily-cost \
 --trigger-http 
 ```
 
+如果不需要通过 Application Integration 发送邮件，而是直接获取查询的结果数据，也可以直接调用改 Cloud Function 的 HTTP endpoint
+```
+curl -m 70 -X GET https://us-central1-hxh-demo.cloudfunctions.net/daily_cost \
+-H "Authorization: bearer $(gcloud auth print-identity-token)" \
+-H "Content-Type: application/json"
+```
+
+查询结果返回如下：
+```
+{
+    "date": "10/23/2023",
+    "project": "hxh-demo",
+    "total_cost": 6.73,
+    "top10_service":
+    [
+        {
+            "cost": 2.62,
+            "cost_ratio": 0.3895,
+            "service": "Compute Engine"
+        },
+        {
+            "cost": 2.4,
+            "cost_ratio": 0.3566,
+            "service": "Kubernetes Engine"
+        },
+        {
+            "cost": 1.5,
+            "cost_ratio": 0.2225,
+            "service": "Networking"
+        },
+        {
+            "cost": 0.13,
+            "cost_ratio": 0.0191,
+            "service": "Notebooks"
+        },
+        {
+            "cost": 0.08,
+            "cost_ratio": 0.0112,
+            "service": "Security Command Center"
+        },
+        {
+            "cost": 0.0,
+            "cost_ratio": 0.0004,
+            "service": "Cloud Functions"
+        },
+        {
+            "cost": 0.0,
+            "cost_ratio": 0.0002,
+            "service": "Vertex AI"
+        },
+        {
+            "cost": 0.0,
+            "cost_ratio": 0.0,
+            "service": "Artifact Registry"
+        },
+        {
+            "cost": 0.0,
+            "cost_ratio": 0.0,
+            "service": "Cloud Storage"
+        }
+    ]
+}
+```
+
 
 ### 3. 创建一个 Daily 触发的 Cloud Scheduler，目标为 Cloud Function HTTP endpoint
  - Frequency: ```0 10 * * *```
