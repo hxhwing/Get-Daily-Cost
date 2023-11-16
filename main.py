@@ -8,14 +8,14 @@ from datetime import timedelta
 client = bigquery.Client()
 publisher = pubsub_v1.PublisherClient()
 
-topic_path = os.environ.get("topic_path")
+# topic_path = os.environ.get("topic_path")
 table = os.environ.get("cost_table_name")
-project = os.environ.get("project_id")
+# project = os.environ.get("project_id")
 today = date.today()
 costdate = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
-def get_daily_cost(request):
+def query_cost(project):
     query_totalcost = f"""
       SELECT TIMESTAMP_TRUNC(usage_end_time, DAY) as cost_date,ROUND(sum(cost),2) as total_cost 
       FROM `{table}` 
@@ -50,12 +50,27 @@ def get_daily_cost(request):
         output2.append(item)
 
     output["top10_service"] = output2
-    print(output)
+    return output
+
+
+def get_daily_cost(request):
+    if "Project-IDs" not in request.headers:
+        return "Please specify project ids in HTTP header Project-IDs, separate with commas"
+    if "Topic-Name" not in request.headers:
+        return "Please specify Pub/Sub topic name in HTTP header Topic-Name in this format: projects/project-id/topics/topic-name"
+    project_ids = request.headers.get("Project-IDs")
+    topic_path = request.headers.get("Topic-Name")
+    project_list = project_ids.split(",")
+    message = []
+
+    for project in project_list:
+        response = query_cost(project)
+        message.append(response)
 
     # Data must be a bytestring
-    data = json.dumps(output)
+    data = json.dumps(message)
     data = data.encode("utf-8")
     future = publisher.publish(topic_path, data)
 
     print(f"Published messages to {topic_path}.")
-    return output
+    return message
