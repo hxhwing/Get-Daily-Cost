@@ -56,10 +56,7 @@ def query_cost(project):
 def get_daily_cost(request):
     if "Project-IDs" not in request.headers:
         return "Please specify project ids in HTTP header Project-IDs, separate with commas"
-    if "Topic-Name" not in request.headers:
-        return "Please specify Pub/Sub topic name in HTTP header Topic-Name in this format: projects/project-id/topics/topic-name"
     project_ids = request.headers.get("Project-IDs")
-    topic_path = request.headers.get("Topic-Name")
     project_list = project_ids.split(",")
     message = []
 
@@ -67,10 +64,14 @@ def get_daily_cost(request):
         response = query_cost(project)
         message.append(response)
 
-    # Data must be a bytestring
-    data = json.dumps(message)
-    data = data.encode("utf-8")
-    future = publisher.publish(topic_path, data)
+    if "Topic-Name" in request.headers:
+        topic_path = request.headers.get("Topic-Name")
+        # Data must be a bytestring
+        data = json.dumps(message)
+        data = data.encode("utf-8")
+        future = publisher.publish(topic_path, data)
+        print(f"Published messages to {topic_path}.")
+    else:
+        print("No 'Topic-Name' header found, if you need to send response through email, please specify Pub/Sub topic name in HTTP header Topic-Name in this format: projects/project-id/topics/topic-name")
 
-    print(f"Published messages to {topic_path}.")
     return message
