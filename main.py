@@ -73,5 +73,5 @@ def get_daily_cost(request):
         print(f"Published messages to {topic_path}.")
     else:
         print("No 'Topic-Name' header found, if you need to send response through email, please specify Pub/Sub topic name in HTTP header Topic-Name in this format: projects/project-id/topics/topic-name")
-
+    print(message)
     return message
