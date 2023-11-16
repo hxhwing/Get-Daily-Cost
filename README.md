@@ -54,7 +54,7 @@ gcloud functions deploy get-daily-cost \
 
 HTTP header 定义包括：
  - Project-IDs: 需要获取哪些项目的成本统计，用逗号隔开
- - Topic-Name: 用于接收成本数据，并推送邮件的 Pub/Sub topic，格式为 ```projects/project_id/topics/topic_name```
+ - (Optional)Topic-Name: 用于接收成本数据，并推送邮件的 Pub/Sub topic，格式为 ```projects/project_id/topics/topic_name```
 ```
 curl -m 70 -X GET https://us-central1-hxh-demo.cloudfunctions.net/get-daily-cost \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
